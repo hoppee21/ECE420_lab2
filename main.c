@@ -10,7 +10,6 @@
 
 #include "common.h"
 
-#define MAX_CLIENTS 20
 
 pthread_rwlock_t rwlock;
 char **theArray;
@@ -43,7 +42,6 @@ void *ServerEcho(void *args)
         pthread_rwlock_rdlock(&rwlock);
         getContent(req.msg, req.pos, theArray);
         pthread_rwlock_unlock(&rwlock);
-        write(clientFileDescriptor, req.msg, COM_BUFF_SIZE);
     } else {
         pthread_rwlock_wrlock(&rwlock);
         setContent(req.msg, req.pos, theArray);
@@ -51,9 +49,15 @@ void *ServerEcho(void *args)
         pthread_rwlock_unlock(&rwlock);
     }
 
+    if (write(clientFileDescriptor, req.msg, COM_BUFF_SIZE) == -1) {
+        perror("Write failed");
+        close(clientFileDescriptor);
+        return NULL;
+    }
+
     close(clientFileDescriptor);
 
-    return NULL;
+    pthread_exit(NULL);
 }
 
 
@@ -64,9 +68,9 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    int arraySize = atoi(argv[1]);
+    int arraySize = strtol(argv[1], NULL, 10);
     char *serverIP = argv[2];
-    int serverPort = atoi(argv[3]);
+    int serverPort = strtol(argv[3], NULL, 10);
 
     // Initialize the array with the given size
     initializeArray(arraySize);
@@ -84,7 +88,7 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in sock_var;
     memset(&sock_var, 0, sizeof(sock_var));
     sock_var.sin_addr.s_addr = inet_addr(serverIP);
-    sock_var.sin_port = htons(serverPort);
+    sock_var.sin_port = serverPort;
     sock_var.sin_family = AF_INET;
 
     if (bind(serverFileDescriptor, (struct sockaddr*)&sock_var, sizeof(sock_var)) < 0) {
@@ -93,7 +97,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (listen(serverFileDescriptor, MAX_CLIENTS) < 0) {
+    if (listen(serverFileDescriptor, 10000) < 0) {
         perror("Listen failed");
         close(serverFileDescriptor);
         return 1;
@@ -122,7 +126,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Wait for all threads to finish
-    int j;
+    long j;
     for (j = 0; j < threadCount; j++) {
         pthread_join(threads[j], NULL);
     }

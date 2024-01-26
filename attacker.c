@@ -1,3 +1,6 @@
+/*
+    Client that send read write request to test the consistency of read and write
+*/
 #include<stdio.h>
 #include<stdlib.h>
 #include<sys/types.h>
@@ -179,12 +182,12 @@ void rand_str(char *dest, size_t length) {
     *dest = '\0';
 }
 
-// test whether the received message is consistent
+// test whether the recieved message is consistent
 int is_valid(char* str){
     int i;
     // printf("tested string: %s\n", str);
     for (i=0; i<NUM_MSG_; ++i){
-        // printf("target: %s\n", msg_pool[i]);
+//         printf("target: %s\n", msg_pool[i]);
         if (0 == strcmp(str, msg_pool[i])){
             return 1;
         }

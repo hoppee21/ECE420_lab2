@@ -7,9 +7,9 @@
 // Change these if needed
 #define COM_IS_VERBOSE 0 // 0 off; 1 on
 // Do not change the following for your final testing and submitted version
-#define COM_NUM_REQUEST 1000 // Number of total request
+#define COM_NUM_REQUEST 1000  // Number of total request
 // For ease of implementation, prepare this many threads in server to handle the request
-#define COM_BUFF_SIZE 100 // communication buffer size, which is the maximum size of the transmitted string
+#define COM_BUFF_SIZE 100  // communication buffer size, which is the maximum size of the transmitted string
 #define COM_CLIENT_THREAD_COUNT 100 // Number of threads in client, COM_NUM_REQUEST should be divisible by this Number
 #define ART_DELAY 10 // artificial delay, in microseconds, for all R/W process
 //-------------------------------------
@@ -85,4 +85,4 @@ void saveTimes(double* time, int length){
     fclose(op);
 }
 
-#endif //LAB2_COMMON_H
+#endif
