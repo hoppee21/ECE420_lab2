@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (listen(serverFileDescriptor, 10000) < 0) {
+    if (listen(serverFileDescriptor, 2000) < 0) {
         perror("Listen failed");
         close(serverFileDescriptor);
         return 1;
@@ -105,11 +105,11 @@ int main(int argc, char *argv[]) {
 
     printf("Server started on %s:%d\n", serverIP, serverPort);
 
-    pthread_t threads[COM_NUM_REQUEST];
+    pthread_t threads[4*COM_NUM_REQUEST];
     int clientFileDescriptor;
     int threadCount = 0;
 
-    while (threadCount < COM_NUM_REQUEST) {
+    while (threadCount < 4*COM_NUM_REQUEST) {
         clientFileDescriptor = accept(serverFileDescriptor, NULL, NULL);
         if (clientFileDescriptor < 0) {
             perror("Accept failed");
@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
         free(theArray[j]);
     }
     free(theArray);
-    close(serverFileDescriptor);
 
+    close(serverFileDescriptor);
     return 0;
 }
