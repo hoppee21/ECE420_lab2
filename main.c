@@ -105,36 +105,61 @@ int main(int argc, char *argv[]) {
 
     printf("Server started on %s:%d\n", serverIP, serverPort);
 
-    pthread_t threads[4*COM_NUM_REQUEST];
+    pthread_t threads[COM_NUM_REQUEST];
     int clientFileDescriptor;
-    int threadCount = 0;
+    int threadCount;
 
-    while (threadCount < 4*COM_NUM_REQUEST) {
-        clientFileDescriptor = accept(serverFileDescriptor, NULL, NULL);
-        if (clientFileDescriptor < 0) {
-            perror("Accept failed");
-            continue;
+    fd_set fdSet;
+    struct timeval timeout;
+    int selectResult;
+
+    while (1) {
+
+        FD_ZERO(&fdSet); // Clear the socket set
+        FD_SET(serverFileDescriptor, &fdSet); // Add the server socket to the set
+
+        // Set timeout to 10 seconds
+        timeout.tv_sec = 10;
+        timeout.tv_usec = 0;
+
+        // Wait for an activity on the server socket, timeout after 10 seconds
+        selectResult = select(serverFileDescriptor + 1, &fdSet, NULL, NULL, &timeout);
+
+        if (selectResult == -1) {
+            perror("select error");
+            break;
+        } else if (selectResult == 0) {
+            printf("Timeout occurred! No client connection after 10 seconds.\n");
+            break; // Break out of the loop if timeout occurs
         }
 
-        if (pthread_create(&threads[threadCount], NULL, ServerEcho, (void *)(long)clientFileDescriptor) != 0) {
-            perror("Thread creation failed");
-            close(clientFileDescriptor);
-            continue;
+        for (threadCount = 0; threadCount < COM_NUM_REQUEST; threadCount++) {
+            clientFileDescriptor = accept(serverFileDescriptor, NULL, NULL);
+            if (clientFileDescriptor < 0) {
+                perror("Accept failed");
+                continue;
+            }
+
+            if (pthread_create(&threads[threadCount], NULL, ServerEcho, (void *) (long) clientFileDescriptor) != 0) {
+                perror("Thread creation failed");
+                close(clientFileDescriptor);
+                continue;
+            }
+
         }
 
-        threadCount++;
-    }
-
-    // Wait for all threads to finish
-    long j;
-    for (j = 0; j < threadCount; j++) {
-        pthread_join(threads[j], NULL);
+        // Wait for all threads to finish
+        long j;
+        for (j = 0; j < threadCount; j++) {
+            pthread_join(threads[j], NULL);
+        }
     }
 
     // Cleanup
     pthread_rwlock_destroy(&rwlock);
-    for (j = 0; j < arraySize; j++) {
-        free(theArray[j]);
+    int i;
+    for (i = 0; i < arraySize; i++) {
+        free(theArray[i]);
     }
     free(theArray);
 
