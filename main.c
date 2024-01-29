@@ -22,7 +22,7 @@ pthread_mutex_t timerMutex;
 int length = 0;
 
 void initializeTimeArray (int array_size){
-    times = malloc(array_size *sizeof (double));
+    times = malloc(array_size * sizeof (double));
 }
 
 
@@ -75,6 +75,7 @@ void *ServerEcho(void *args)
         pthread_mutex_lock(&timerMutex);
         times[length] = elapsed;
         length ++;
+        printf("%d\n", length);
         pthread_mutex_unlock(&timerMutex);
     }
 
@@ -106,7 +107,7 @@ int main(int argc, char *argv[]) {
 
     if (timeBool == 1){
         // Initialize the time array
-        initializeTimeArray(COM_CLIENT_THREAD_COUNT);
+        initializeTimeArray(1000);
         pthread_mutex_init(&timerMutex, NULL);
     }
 
