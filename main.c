@@ -9,10 +9,22 @@
 #include <unistd.h>
 
 #include "common.h"
+#include "timer.h"
 
 
 pthread_rwlock_t rwlock;
 char **theArray;
+
+
+double *times;
+int timeBool = 1;
+pthread_mutex_t timerMutex;
+int length = 0;
+
+void initializeTimeArray (int array_size){
+    times = malloc(array_size * sizeof (double));
+}
+
 
 void initializeArray(int array_size) {
     theArray = malloc(array_size * sizeof(char*));
@@ -38,6 +50,13 @@ void *ServerEcho(void *args)
     read(clientFileDescriptor,str,COM_BUFF_SIZE);
     ParseMsg(str, &req);
 
+    // timer start components
+    double start, end, elapsed;
+    if (timeBool == 1){
+
+        GET_TIME(start);
+    }
+
     if(req.is_read){
         pthread_rwlock_rdlock(&rwlock);
         getContent(req.msg, req.pos, theArray);
@@ -47,6 +66,21 @@ void *ServerEcho(void *args)
         setContent(req.msg, req.pos, theArray);
         getContent(req.msg, req.pos, theArray);
         pthread_rwlock_unlock(&rwlock);
+    }
+
+    // timer end components
+    if (timeBool == 1){
+        GET_TIME(end);
+        elapsed = end - start;
+        pthread_mutex_lock(&timerMutex);
+        times[length] = elapsed;
+        length ++;
+        if (length >= 1000) {
+            //save average time
+            saveTimes(times, length);
+            length = 0;
+        }
+        pthread_mutex_unlock(&timerMutex);
     }
 
     if (write(clientFileDescriptor, req.msg, COM_BUFF_SIZE) == -1) {
@@ -74,6 +108,12 @@ int main(int argc, char *argv[]) {
 
     // Initialize the array with the given size
     initializeArray(arraySize);
+
+    if (timeBool == 1){
+        // Initialize the time array
+        initializeTimeArray(1000);
+        pthread_mutex_init(&timerMutex, NULL);
+    }
 
     // Initialize the read-write lock
     pthread_rwlock_init(&rwlock, NULL);
@@ -155,8 +195,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    //free the time list
+    free(times);
+
     // Cleanup
     pthread_rwlock_destroy(&rwlock);
+    pthread_mutex_destroy(&timerMutex);
     int i;
     for (i = 0; i < arraySize; i++) {
         free(theArray[i]);
