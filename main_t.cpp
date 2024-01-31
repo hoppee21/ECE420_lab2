@@ -75,6 +75,11 @@ void *ServerEcho(void *args)
         pthread_mutex_lock(&timerMutex);
         times[length] = elapsed;
         length ++;
+        if (length >= 1000) {
+            //save average time
+            saveTimes(times, length);
+            length = 0;
+        }
         pthread_mutex_unlock(&timerMutex);
     }
 
@@ -190,8 +195,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    //save average time
-    saveTimes(times, length);
 
     //free the time list
     free(times);
