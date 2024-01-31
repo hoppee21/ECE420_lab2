@@ -194,6 +194,8 @@ int main(int argc, char *argv[]) {
     //save average time
     saveTimes(times, length);
 
+    //free the time list
+    free(times);
 
     // Cleanup
     pthread_rwlock_destroy(&rwlock);

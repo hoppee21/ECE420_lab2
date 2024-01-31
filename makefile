@@ -6,5 +6,6 @@ attacker: attacker.c
 
 client: client.c
 	gcc -pthread client.c -o client
+	
 clean: 
 	rm main attacker client
