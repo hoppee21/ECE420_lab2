@@ -75,7 +75,6 @@ void *ServerEcho(void *args)
         pthread_mutex_lock(&timerMutex);
         times[length] = elapsed;
         length ++;
-        printf("%d\n", length);
         pthread_mutex_unlock(&timerMutex);
     }
 
