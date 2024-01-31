@@ -22,15 +22,15 @@ pthread_mutex_t timerMutex;
 int length = 0;
 
 void initializeTimeArray (int array_size){
-    times = malloc(array_size * sizeof (double));
+    times = (double*) malloc(array_size * sizeof (double));
 }
 
 
 void initializeArray(int array_size) {
-    theArray = malloc(array_size * sizeof(char*));
+    theArray = (char **) malloc(array_size * sizeof(char*));
     int i;
     for (i = 0; i < array_size; i++) {
-        theArray[i] = malloc(COM_BUFF_SIZE * sizeof(char));  // Adjust size as needed
+        theArray[i] = (char *) malloc(COM_BUFF_SIZE * sizeof(char));  // Adjust size as needed
         sprintf(theArray[i], "String %d: the initial value", i);
     }
 }
