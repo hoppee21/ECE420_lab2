@@ -11,6 +11,7 @@
 #include "common.h"
 #include "timer.h"
 
+#define TIME_AVG_SIZE 1000
 
 pthread_rwlock_t rwlock;
 char **theArray;
@@ -51,7 +52,9 @@ void *ServerEcho(void *args)
     ParseMsg(str, &req);
 
     // timer start components
-    double start, end, elapsed;
+    double start, end;
+    double * elapsed;
+    elapsed = malloc(sizeof (double));
     if (timeBool == 1){
 
         GET_TIME(start);
@@ -71,16 +74,8 @@ void *ServerEcho(void *args)
     // timer end components
     if (timeBool == 1){
         GET_TIME(end);
-        elapsed = end - start;
-        pthread_mutex_lock(&timerMutex);
-        times[length] = elapsed;
-        length ++;
-        if (length >= 1000) {
-            //save average time
-            saveTimes(times, length);
-            length = 0;
-        }
-        pthread_mutex_unlock(&timerMutex);
+        *elapsed = end - start;
+        printf("Is read %d,time %f \n",req.is_read, *elapsed);
     }
 
     if (write(clientFileDescriptor, req.msg, COM_BUFF_SIZE) == -1) {
@@ -91,7 +86,7 @@ void *ServerEcho(void *args)
 
     close(clientFileDescriptor);
 
-    pthread_exit(NULL);
+    pthread_exit((void*)elapsed);
 }
 
 
@@ -111,7 +106,7 @@ int main(int argc, char *argv[]) {
 
     if (timeBool == 1){
         // Initialize the time array
-        initializeTimeArray(1000);
+        initializeTimeArray(TIME_AVG_SIZE);
         pthread_mutex_init(&timerMutex, NULL);
     }
 
@@ -190,10 +185,16 @@ int main(int argc, char *argv[]) {
 
         // Wait for all threads to finish
         long j;
+        double *temp;
         for (j = 0; j < threadCount; j++) {
-            pthread_join(threads[j], NULL);
+            pthread_join(threads[j], (void**)&temp);
+            // printf ("received: %f\n", *temp);
+            times[j] = *temp;
         }
+        saveTimes(times, threadCount);
     }
+
+
 
     //free the time list
     free(times);
